@@ -12,6 +12,7 @@ alias icat='kitty +kitten icat'
 alias dif='kitt +kitten diff'
 
 # Helpers
+alias cat='bat'
 alias grep='grep --color=auto'
 alias df='df -h' # disk free, in Gigabytes, not bytes
 alias du='du -h -c' # calculate disk usage for a folder
