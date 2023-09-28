@@ -1,33 +1,22 @@
-# vim:ft=ruby
+# Taps
+tap "homebrew/cask"
+tap "homebrew/cask-fonts"
+tap "koekeishiya/formulae"
 
-if OS.mac?
-    # taps
-    tap "homebrew/cask"
-    tap "homebrew/cask-fonts"
-    tap "koekeishiya/formulae"
+brew "noti" # utility to display notifications from scripts
+brew "trash" # rm, but put in the trash rather than completely delete
 
-    brew "noti" # utility to display notifications from scripts
-    brew "trash" # rm, but put in the trash rather than completely delete
+# Applications
+cask "kitty" # a better terminal emulator
+cask "imageoptim" # a tool to optimize images
+cask "1password/tap/1password-cli"
 
-    # Applications
-    cask "kitty" # a better terminal emulator
-#    cask "imageoptim" # a tool to optimize images
-#    cask "1password/tap/1password-cli"
-#    cask "wezterm" # a better terminal emulator
-
-    # yabai
-#    brew "yabai"
-#    brew "skhd"
-
-    # Fonts
-    cask "font-fira-code"
-    cask "font-jetbrains-mono"
-    cask "font-cascadia-mono"
-    cask "font-symbols-only-nerd-font"
-    cask "font-recursive-code"
-elsif OS.linux?
-    brew "xclip" # access to clipboard (similar to pbcopy/pbpaste)
-end
+# Fonts
+cask "font-fira-code"
+cask "font-jetbrains-mono"
+cask "font-cascadia-mono"
+cask "font-symbols-only-nerd-font"
+cask "font-recursive-code"
 
 tap "homebrew/bundle"
 tap "homebrew/core"
