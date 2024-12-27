@@ -34,8 +34,8 @@ alias clsym="find -L . -name . -o -type d -prune -o -type l -exec rm {} +"
 
 # use exa if available
 if [[ -x "$(command -v exa)" ]]; then
-  alias ll="exa --icons --git --long --header"
-  alias l="exa --icons --git --all --long --header"
+  alias ll="eza --icons --git --long --header"
+  alias l="eza --icons --git --all --long --header"
 else
   alias l="ls -lah ${colorflag}"
   alias ll="ls -lFh ${colorflag}"

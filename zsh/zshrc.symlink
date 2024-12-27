@@ -1,5 +1,13 @@
 export ZSH=$DOTFILES/zsh
 
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LDFLAGS="-L/opt/homebrew/opt/ruby/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/ruby/include"
+
+export JAVA_HOME=$(/usr/libexec/java_home -v 23.0.1)
+export PATH=$JAVA_HOME/bin:$PATH
+
 if [[ -d $DOTFILES/zsh/functions ]]; then
     for func in $DOTFILES/zsh/functions/*(:t); autoload -U $func
 fi
@@ -161,3 +169,12 @@ done
 
 # Starship Prompt
 eval "$(starship init zsh)"
+export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /Users/davidlee/.dart-cli-completion/zsh-config.zsh ]] && . /Users/davidlee/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+
+
+. "$HOME/.local/bin/env"

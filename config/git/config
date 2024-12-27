@@ -144,6 +144,7 @@
     pager = delta
     editor = vim
     whitespace = cr-at-eol
+	autocrlf = input
 [delta]
     features = unobtrusive-line-numbers decorations
     whitespace-error-style = 22 reverse
@@ -174,3 +175,6 @@
 [rebase]
     instructionFormat = "[%an - %ar] %s"
     autoStash = true
+[user]
+	name = David Lee
+	email = davidlee8780@gmail.com
