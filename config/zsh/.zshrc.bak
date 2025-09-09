@@ -1,0 +1,131 @@
+# .zshrc é carregado para shells interativos (quando o terminal está pronto para você digitar comandos)
+
+# Ativa o sistema de autocomplete do zsh para sugestões e finalização automática
+autoload -U compinit add-zsh-hook
+compinit
+
+# Função que adiciona um caminho no PATH somente se não estiver presente para evitar duplicação
+prepend_path() {
+  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+    export PATH="$1:$PATH"
+  fi
+}
+
+# Adiciona vários diretórios úteis ao PATH
+for dir in $HOME/.cargo/bin $HOME/.local/bin /usr/local/opt/grep/libexec/gnubin /usr/local/sbin $HOME/.dotfiles/config/zsh/bin $HOME/bin; do
+  prepend_path $dir
+done
+
+# Configura o tempo para mostrar duração de comandos demorados (acima de 10s)
+export REPORTTIME=10
+
+# Tempo para sequência de teclas especiais
+export KEYTIMEOUT=1
+
+# Configura opções do zsh para melhor comportamento
+setopt NO_BG_NICE          # Não reduz prioridade de processos rodando em background
+setopt NO_HUP              # Não mata processos em background quando fecha terminal
+setopt NO_LIST_BEEP        # Evitar som de beep irritante em certos erros
+setopt LOCAL_OPTIONS       # Permite opções locais em funções
+setopt LOCAL_TRAPS         # Permite traps locais em funções
+setopt PROMPT_SUBST        # Permite substituições dinâmicas no prompt
+
+# Histórico
+setopt EXTENDED_HISTORY    # Históricos gravados com timestamp e duração
+setopt HIST_REDUCE_BLANKS  # Remove entradas com linhas em branco
+setopt SHARE_HISTORY       # Compartilha histórico entre várias sessões
+setopt HIST_IGNORE_ALL_DUPS # Ignora entradas duplicadas no histórico
+setopt COMPLETE_ALIASES    # Permite autocompletar aliases
+
+########################################################
+# Configurações de teclas para facilitar a navegação e edição de comandos
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
+bindkey '^[^[[C' forward-word
+bindkey '^[^[[D' backward-word
+bindkey '^[[1;3D' beginning-of-line
+bindkey '^[[1;3C' end-of-line
+bindkey '^[[5D' beginning-of-line
+bindkey '^[[5C' end-of-line
+bindkey '^?' backward-delete-char
+
+# Deletar caractere usando teclas especiais (compatibilidade)
+if [[ -n "${terminfo[kdch1]}" ]]; then
+  bindkey "${terminfo[kdch1]}" delete-char
+else
+  for key in "^[[3~" "^[3;5~" "\\e[3~"; do
+    bindkey "$key" delete-char
+  done
+fi
+
+# Bindkeys para modo vi de edição em linha
+bindkey "^A" vi-beginning-of-line
+bindkey -M viins "^F" vi-forward-word
+bindkey -M viins "^E" vi-add-eol
+bindkey "^J" history-beginning-search-forward
+bindkey "^K" history-beginning-search-backward
+
+########################################################
+# Configurações de autocomplete avançado via zstyle
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'          # Case insensitive
+zstyle ':completion:*' insert-tab pending                    # Não completar ao colar com tab
+zstyle ':completion:*' completer _expand _complete _files _correct _approximate
+zstyle ':completion:*' verbose yes                            # Mostrar mensagens detalhadas na completion
+zstyle ':completion:*:descriptions' format '%B%d%b'
+zstyle ':completion:*:messages' format '%d'
+zstyle ':completion:*:warnings' format 'No matches for: %d'
+zstyle ':completion:*' group-name ''                          # Oculta nome do grupo
+
+########################################################
+# Configura FZF (fuzzy finder) se instalado para buscas rápidas no terminal
+if command -v fzf &>/dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f'    # comando para listar arquivos
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_DEFAULT_OPTS="--color bg:-1,bg+:-1,fg:-1,fg+:#feffff,hl:#993f84,hl+:#d256b5,info:#676767,prompt:#676767,pointer:#676767"
+  source <(fzf --zsh)
+fi
+
+########################################################
+# Cores para man pages para facilitar leitura
+export MANROFFOPT='-c'
+typeset -A man_colors=(
+  mb "$(tput bold; tput setaf 2)"        # Verde para títulos
+  md "$(tput bold; tput setaf 6)"        # Ciano para descrições
+  me "$(tput sgr0)"                       # Reset formatação
+  so "$(tput bold; tput setaf 3; tput setab 4)" # Amarelo em fundo azul para destaque
+  se "$(tput rmso; tput sgr0)"            # Reset destaque
+  us "$(tput smul; tput bold; tput setaf 7)"     # Sublinhado branco para links
+  ue "$(tput rmul; tput sgr0)"             # Reset sublinhado
+  mr "$(tput rev)"                       # Inverter cores
+  mh "$(tput dim)"                       # Texto em cinza
+)
+for key val in ${(kv)man_colors}; do
+  export LESS_TERMCAP_$key=$val
+done
+
+########################################################
+# Configuração para zoxide (gerenciador de navegação rápida entre diretórios)
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh --hook pwd)"    # Inicializa zoxide para Zsh
+elif [[ -f "$(brew --prefix 2>/dev/null)/etc/profile.d/z.sh" ]]; then
+  source "$(brew --prefix)/etc/profile.d/z.sh"  # Fallback para z.sh do Homebrew
+fi
+
+########################################################
+# Oh My Zsh setup
+export ZSH="$HOME/.oh-my-zsh"                                    # Caminho para Oh My Zsh
+plugins=(git)                                                    # Plugins ativados no Oh My Zsh
+source $ZSH/oh-my-zsh.sh                                         # Carrega o Oh My Zsh principal
+source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh  # Sugestões automáticas de comandos
+source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh # Destaque de sintaxe no terminal
+
+########################################################
+# Modularização: carrega arquivos organizados para facilitar a manutenção
+export ZSH_LOCAL="$HOME/.dotfiles/config/zsh"
+if [ -f $ZSH_LOCAL/.zsh_env ]; then source $ZSH_LOCAL/.zsh_env; fi          # Variáveis de ambiente e PATH
+if [ -f $ZSH_LOCAL/.zsh_aliases ]; then source $ZSH_LOCAL/.zsh_aliases; fi  # Aliases
+if [ -f $ZSH_LOCAL/.zsh_functions ]; then source $ZSH_LOCAL/.zsh_functions; fi # Funções personalizadas
+
+########################################################
+# Inicialização do prompt Starship, que melhora visual e info do prompt
+eval "$(starship init zsh)"

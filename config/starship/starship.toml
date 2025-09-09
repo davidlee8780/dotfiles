@@ -1,0 +1,190 @@
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$git_metrics\
+$fill\
+$lua\
+$nodejs\
+$dart\
+$aws\
+$swift\
+$buf\
+$c\
+$conda\
+$docker_context\
+$elixir\
+$elm\
+$golang\
+$java\
+$julia\
+$nim\
+$nix_shell\
+$python\
+$custom\
+$cmd_duration $jobs $time\
+$line_break\
+$character
+"""
+
+[hostname]
+style = "yellow"
+format = "[$hostname]($style) "
+
+[custom.desk]
+description = "indicates whether you're in a desk-spawned shell"
+command = "(command desk -v &>/dev/null && (desk | grep -q 'No desk activated.' && echo '' || echo '🚀')) || echo ''"
+when = "true"
+
+[custom.sudo]
+description = "valid sudo timestamp marker"
+command = "echo -n ''"
+format = "[$symbol$output]($style) "
+style = "bold fg:#614b51"
+when = "sudo -vn &>/dev/null"
+
+[nodejs]
+format = "[$symbol($version )]($style)"
+
+[fill]
+symbol = " "
+
+[directory]
+style = "blue"
+read_only = " "
+truncation_length = 4
+truncate_to_repo = false
+
+[character]
+success_symbol = "[❯](purple)"
+error_symbol = "[❯](red)"
+vicmd_symbol = "[❮](green)"
+
+[git_branch]
+symbol = "[](bold fg:#626262) " # 
+format = "[$symbol$branch]($style) "
+style = "bold fg:#7c8377" # 245
+
+[jobs]
+symbol = ""
+style = "bold red"
+number_threshold = 1
+format = "[$symbol]($style)"
+
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "bright-black"
+
+[git_status]
+# # REF:
+# # https://github.com/avaaxcx/dotfiles/blob/master/.config/starship.toml
+# # https://github.com/fredericrous/dotfiles/blob/main/private_dot_config/starship.toml
+style = "#7c8377"
+# format = "([\[$conflicted$staged$modified$renamed$deleted$untracked$stashed$ahead_behind\]](fg:$style) )"
+conflicted = "[ ](bold fg:88 fg:#FAB005)[  ${count} ](fg:#d9bb80)"
+staged = "[ $count ](fg:green)"
+modified = "[  ${count} ](fg:purple)"
+renamed = "[ ${count} ](fg:blue)"
+deleted = "[ ${count} ](fg:red)"
+untracked = "[?${count} ](fg:yellow)"
+stashed = "[ ${count} ](fg:green)"
+ahead = "[ ${count} ](fg:white)"
+behind = "[ ${count} ](fg:white)"
+diverged = "[ ](fg:gray)[ נּ ](fg:gray)[ ${ahead_count} ](fg:gray)[ ${behind_count} ](fg:gray)"
+format = '([$conflicted$staged$modified$renamed$deleted$untracked$stashed$ahead_behind](fg:$style))'
+# # up_to_date = ""
+# ahead = "[⇡](fg:white)" # ⇡
+# untracked = ""
+# behind = "[⇣](fg:white)" # ⇣
+# diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+# modified = "[](fg:purple)" #•﯂
+# # modified = "[~${count}](fg:red)"
+# staged = "[](fg:green)" #
+# # staged = "[$count](fg:green)"
+# conflicted = "[](bold fg:#FAB005)[${count}](fg:#d9bb80)"
+# stashed = "[${count}](fg:white)"
+# deleted = "[](fg:red)"
+# # deleted = "[$count](fg:red))"
+
+[git_metrics]
+disabled = false
+
+[cmd_duration]
+format = "[$duration]($style)"
+style = "yellow"
+
+[memory_usage]
+symbol = " "
+
+[rust]
+symbol = " "
+
+[time]
+disabled = false
+style = "bold white"
+format = "[$time]($style)"
+
+[aws]
+symbol = "  "
+
+[swift]
+symbol = "  "
+
+[buf]
+symbol = " "
+
+[c]
+symbol = " "
+
+[conda]
+symbol = " "
+
+[dart]
+format = "[$symbol($version )]($style)"
+symbol = " "
+style = "bold blue"
+
+[docker_context]
+symbol = " "
+
+[elixir]
+symbol = " "
+
+[elm]
+symbol = " "
+
+[golang]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[nim]
+symbol = " "
+
+[nix_shell]
+symbol = " "
+
+[package]
+symbol = " "
+
+[python]
+symbol = " "
+
+[spack]
+symbol = "🅢 "
+
+[lua]
+format = "[$symbol($version )]($style)"

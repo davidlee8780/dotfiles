@@ -1,0 +1,27 @@
+# Arquivo exclusivo para aliases, facilita manutenção e organização
+
+# Git comandos fáceis
+alias gs='git status'                  # Mostra status do git
+alias ga='git add'                     # Adiciona arquivos ao stage
+alias gc='git commit -m'               # Commit com mensagem
+alias gp='git push'                    # Envia para o repositório remoto
+
+# Utilitários práticos
+alias reload='source ~/.zshrc'       # Recarrega config do zshrc
+alias icat='kitty +kitten icat'       # Visualiza imagens no terminal Kitty
+alias dif='kitty +kitten diff'        # Visualiza diferenças no Kitty
+alias cat='bat'                       # Usa bat para saída colorida em arquivos
+alias grep='grep --color=auto'       # grep com cores para facilitar leitura
+alias df='df -h'                     # Usa unidades humanas (GB) para espaço em disco
+alias du='du -h -c'                  # Tamanho legível de pastas e total
+alias lpath='echo $PATH | tr ":" "\n"' # Lista PATH separando por linhas
+alias ios='open -a /Applications/Xcode-15.0.0.app/Contents/Developer/Applications/Simulator.app' # Abre simulador iOS
+alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder" # Oculta ícones da área de trabalho macOS
+alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder" # Mostra ícones na área de trabalho macOS
+alias cleanup="find . -name '*.DS_Store' -type f -ls -delete"   # Remove arquivos .DS_Store recursivamente
+alias clsym="find -L . -name . -o -type d -prune -o -type l -exec rm {} +" # Remove links simbólicos quebrados
+alias ll="eza --icons --git --long --header"                   # Lista arquivos com ícones e infos git
+alias l="eza --icons --git --all --long --header"              # Lista todos arquivos, inclusive ocultos
+alias la="ls -AF --color=auto"                                # Lista arquivos com cores e símbolos
+alias lld="ls -l | grep ^d"                                   # Lista apenas diretórios
+alias rmf="rm -rf"                                            # Remove diretórios recursivamente forçado

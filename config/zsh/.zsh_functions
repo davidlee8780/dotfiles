@@ -1,0 +1,24 @@
+# directory navigation functions with completion
+for func dir in c '$CODE_DIR' h '$HOME'; do
+  eval "
+  $func() { cd $dir/\$1 }
+  _$func() { _files -W $dir -/ }
+  compdef _$func $func
+  "
+done
+
+# Arquivo para funções personalizadas para o terminal
+
+# Função para adicionar diretórios ao PATH se não estiverem adicionados
+prepend_path() {
+  if [ -d "$1" ] && [[ ":$PATH:" != *":$1:"* ]]; then
+    export PATH="$1:$PATH"
+  fi
+}
+
+# Exemplo de função para limpar cache do sistema (macOS)
+clear_cache() {
+  sudo rm -rf ~/Library/Caches/*
+  echo "Cache limpo!"
+}
+
