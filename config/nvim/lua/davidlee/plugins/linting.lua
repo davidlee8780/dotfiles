@@ -8,13 +8,13 @@ return {
 
 		-- if Eslint error configuration not found : change MasonInstall eslint@version or npm i -g eslint at a specific version
 		lint.linters_by_ft = {
-			javascript = {"biomejs"},
-			typescript = {"biomejs"},
-			javascriptreact = {"biomejs"},
-			typescriptreact = {"biomejs"},
+			javascript = { "biomejs" },
+			typescript = { "biomejs" },
+			javascriptreact = { "biomejs" },
+			typescriptreact = { "biomejs" },
 			svelte = { "biomejs" },
 			python = { "pylint" },
-            swift = { "swiftlint" },
+			swift = { "swiftlint" },
 		}
 
 		eslint.args = {
@@ -24,16 +24,16 @@ return {
 			"--stdin",
 			"--stdin-filename",
 			function()
-                return vim.fn.expand("%:p")
+				return vim.fn.expand("%:p")
 			end,
 		}
 
-		vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+		vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave", "TextChanged" }, {
 			group = lint_augroup,
 			callback = function()
-                if not vim.endswith(vim.fn.bufname(), "swiftinterface") then
-                    lint.try_lint()
-                end
+				if not vim.endswith(vim.fn.bufname(), "swiftinterface") then
+					lint.try_lint()
+				end
 			end,
 		})
 

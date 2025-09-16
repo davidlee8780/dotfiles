@@ -40,23 +40,23 @@ return {
 				-- python = { "black" },
 				markdown = { "prettier", "markdown-toc" },
 				-- ["markdown.mdx"] = { "prettier", "markdownlint", "markdown-toc" },
-                swift = { "swiftformat" },
+				swift = { "swiftformat" },
 			},
 			-- format_on_save = {
 			-- 	lsp_fallback = true,
 			-- 	async = false,
 			-- 	timeout_ms = 1000,
 			-- },
-            format_on_save = function(bufnr)
-                local ignore_filetypes = { "oil" }
-                if vim.tbl_contains(ignore_filetypes, vim.bo[bufnr].filetype) then
-                  return
-                end
+			format_on_save = function(bufnr)
+				local ignore_filetypes = { "oil" }
+				if vim.tbl_contains(ignore_filetypes, vim.bo[bufnr].filetype) then
+					return
+				end
 
-                return { timeout_ms = 500, lsp_fallback = true }
-              end,
-              log_level = vim.log.levels.ERROR,
-            })
+				return { timeout_ms = 500, lsp_fallback = true }
+			end,
+			log_level = vim.log.levels.ERROR,
+		})
 
 		-- Configure individual formatters
 		conform.formatters.prettier = {

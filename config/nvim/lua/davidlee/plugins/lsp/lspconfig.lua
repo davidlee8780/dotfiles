@@ -3,75 +3,82 @@ return {
 	event = { "BufReadPre", "BufNewFile" },
 	dependencies = {
 		"hrsh7th/cmp-nvim-lsp",
-		-- "saghen/blink.cmp",
 		{ "antosha417/nvim-lsp-file-operations", config = true },
 	},
 	config = function()
-		-- NOTE: LSP Keybinds
+		-- Função on_attach definida para configurações específicas de LSP
+		local on_attach = function(client, _)
+			-- Desabilitar formatação para alguns clientes se necessário
+			if client.name == "ts_ls" then
+				client.server_capabilities.documentFormattingProvider = false
+			end
+		end
 
+		-- Configuração de keybinds automáticos quando LSP é anexado
 		vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 			callback = function(ev)
-				-- Buffer local mappings
-				-- Check `:help vim.lsp.*` for documentation on any of the below functions
 				local opts = { buffer = ev.buf, silent = true }
 
-				-- keymaps
+				-- Keymaps para navegação e funcionalidades LSP
 				opts.desc = "Show LSP references"
-				vim.keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts) -- show definition, references
+				vim.keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
 
 				opts.desc = "Go to declaration"
-				vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts) -- go to declaration
+				vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
 
 				opts.desc = "Show LSP definitions"
-				vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts) -- show lsp definitions
+				vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts)
 
 				opts.desc = "Show LSP implementations"
-				vim.keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts) -- show lsp implementations
+				vim.keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
 
 				opts.desc = "Show LSP type definitions"
-				vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts) -- show lsp type definitions
+				vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts)
 
 				opts.desc = "See available code actions"
-				vim.keymap.set({ "n", "v" }, "<leader>vca", function()
+				vim.keymap.set({ "n", "v" }, "<leader>ca", function()
 					vim.lsp.buf.code_action()
-				end, opts) -- see available code actions, in visual mode will apply to selection
+				end, opts)
 
 				opts.desc = "Smart rename"
-				vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts) -- smart rename
+				vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
 
 				opts.desc = "Show buffer diagnostics"
-				vim.keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts) -- show  diagnostics for file
+				vim.keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts)
 
 				opts.desc = "Show line diagnostics"
-				vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts) -- show diagnostics for line
+				vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
 
 				opts.desc = "Show documentation for what is under cursor"
-				vim.keymap.set("n", "K", vim.lsp.buf.hover, opts) -- show documentation for what is under cursor
+				vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
 
 				opts.desc = "Restart LSP"
-				vim.keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
+				vim.keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
 
+				opts.desc = "Signature help"
 				vim.keymap.set("i", "<C-h>", function()
 					vim.lsp.buf.signature_help()
 				end, opts)
+
+				-- Navegação entre diagnósticos
+				opts.desc = "Go to next diagnostic"
+				vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+
+				opts.desc = "Go to previous diagnostic"
+				vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
 			end,
 		})
 
-		-- NOTE : Moved all this to Mason including local variables
-		-- used to enable autocompletion (assign to every lsp server config)
-		-- local capabilities = cmp_nvim_lsp.default_capabilities()
-		-- Change the Diagnostic symbols in the sign column (gutter)
-
-		-- Define sign icons for each severity
+		-- Configuração de ícones para diagnósticos
 		local signs = {
-			[vim.diagnostic.severity.ERROR] = " ",
-			[vim.diagnostic.severity.WARN] = " ",
+			[vim.diagnostic.severity.ERROR] = " ",
+			[vim.diagnostic.severity.WARN] = " ",
 			[vim.diagnostic.severity.HINT] = "󰠠 ",
-			[vim.diagnostic.severity.INFO] = " ",
+			[vim.diagnostic.severity.INFO] = " ",
 		}
 
-		-- Set the diagnostic config with all icons
+		-- Aplicar configuração de diagnósticos
 		vim.diagnostic.config({
 			signs = {
 				text = signs, -- Enable signs in the gutter
@@ -81,42 +88,28 @@ return {
 			update_in_insert = false, -- Keep diagnostics active in insert mode
 		})
 
-		-- NOTE :
-		-- Moved back from mason_lspconfig.setup_handlers from mason.lua file
-		-- as mason setup_handlers is deprecated & its causing issues with lsp settings
-		--
-		-- Setup servers
+		-- Configuração base para todos os LSPs
 		local lspconfig = require("lspconfig")
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
 		local capabilities = cmp_nvim_lsp.default_capabilities()
 
-		lspconfig.sourcekit.setup({
-			capabilities = capabilities,
-			cmd = {
-				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp",
-			},
-		})
+		-- Melhorar capabilities para snippets
+		capabilities.textDocument.completion.completionItem.snippetSupport = true
+		capabilities.textDocument.completion.completionItem.resolveSupport = {
+			properties = { "documentation", "detail", "additionalTextEdits" },
+		}
 
-		-- local defaultLSPs = {
-		-- 	"sourcekit",
-		-- }
-		--
-		-- for _, lsp in ipairs(defaultLSPs) do
-		-- 	lspconfig[lsp].setup({
-		-- 		capabilities = capabilities,
-		-- 		-- on_attach = on_attach,
-		-- 		cmd = lsp == "sourcekit" and { vim.trim(vim.fn.system("xcrun -f sourcekit-lsp")) } or nil,
-		-- 	})
-		-- end
-
-		-- Config lsp servers here
-		-- lua_ls
+		-- Configuração do Lua LSP
 		lspconfig.lua_ls.setup({
 			capabilities = capabilities,
+			on_attach = on_attach,
 			settings = {
 				Lua = {
+					runtime = {
+						version = "LuaJIT",
+					},
 					diagnostics = {
-						globals = { "vim" },
+						globals = { "vim", "use" },
 					},
 					completion = {
 						callSnippet = "Replace",
@@ -126,13 +119,146 @@ return {
 							[vim.fn.expand("$VIMRUNTIME/lua")] = true,
 							[vim.fn.stdpath("config") .. "/lua"] = true,
 						},
+						checkThirdParty = false,
+					},
+					telemetry = {
+						enable = false,
 					},
 				},
 			},
 		})
-		-- emmet_ls
+
+		-- Configuração do TypeScript/JavaScript LSP
+		lspconfig.ts_ls.setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			filetypes = {
+				"javascript",
+				"javascriptreact",
+				"typescript",
+				"typescriptreact",
+			},
+			root_dir = function(fname)
+				local util = lspconfig.util
+				-- Não usar ts_ls se for um projeto Deno
+				return not util.root_pattern("deno.json", "deno.jsonc")(fname)
+					and util.root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git")(fname)
+			end,
+			single_file_support = false,
+			init_options = {
+				preferences = {
+					includeCompletionsForModuleExports = true,
+					includeCompletionsForImportStatements = true,
+					includeCompletionsWithSnippetText = true,
+				},
+			},
+			settings = {
+				typescript = {
+					inlayHints = {
+						includeInlayParameterNameHints = "all",
+						includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+						includeInlayFunctionParameterTypeHints = true,
+						includeInlayVariableTypeHints = true,
+						includeInlayPropertyDeclarationTypeHints = true,
+						includeInlayFunctionLikeReturnTypeHints = true,
+						includeInlayEnumMemberValueHints = true,
+					},
+				},
+				javascript = {
+					inlayHints = {
+						includeInlayParameterNameHints = "all",
+						includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+						includeInlayFunctionParameterTypeHints = true,
+						includeInlayVariableTypeHints = true,
+						includeInlayPropertyDeclarationTypeHints = true,
+						includeInlayFunctionLikeReturnTypeHints = true,
+						includeInlayEnumMemberValueHints = true,
+					},
+				},
+			},
+		})
+
+		-- Configuração do Deno LSP
+		lspconfig.denols.setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc"),
+			init_options = {
+				lint = true,
+				unstable = true,
+				suggest = {
+					imports = {
+						hosts = {
+							["https://deno.land"] = true,
+							["https://cdn.nest.land"] = true,
+							["https://crux.land"] = true,
+						},
+					},
+				},
+			},
+		})
+
+		-- Configuração do Swift LSP (SourceKit)
+		local sourcekit_cmd = function()
+			local xcode_path =
+				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp"
+			local xcrun_result = vim.fn.system("xcrun --find sourcekit-lsp 2>/dev/null")
+
+			if vim.v.shell_error == 0 then
+				return { vim.trim(xcrun_result) }
+			elseif vim.fn.executable(xcode_path) == 1 then
+				return { xcode_path }
+			else
+				return { "sourcekit-lsp" } -- Fallback para PATH
+			end
+		end
+
+		lspconfig.sourcekit.setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			cmd = sourcekit_cmd(),
+			filetypes = { "swift", "objective-c", "objective-cpp" },
+		})
+
+		-- Configuração do Go LSP
+		lspconfig.gopls.setup({
+			capabilities = capabilities,
+			on_attach = on_attach,
+			settings = {
+				gopls = {
+					analyses = {
+						unusedparams = true,
+						shadow = true,
+					},
+					staticcheck = true,
+					gofumpt = true,
+					codelenses = {
+						gc_details = false,
+						generate = true,
+						regenerate_cgo = true,
+						run_govulncheck = true,
+						test = true,
+						tidy = true,
+						upgrade_dependency = true,
+						vendor = true,
+					},
+					hints = {
+						assignVariableTypes = true,
+						compositeLiteralFields = true,
+						compositeLiteralTypes = true,
+						constantValues = true,
+						functionTypeParameters = true,
+						parameterNames = true,
+						rangeVariableTypes = true,
+					},
+				},
+			},
+		})
+
+		-- Configuração do Emmet LSP
 		lspconfig.emmet_ls.setup({
 			capabilities = capabilities,
+			on_attach = on_attach,
 			filetypes = {
 				"html",
 				"typescriptreact",
@@ -142,12 +268,14 @@ return {
 				"scss",
 				"less",
 				"svelte",
+				"vue",
 			},
 		})
 
-		-- emmet_language_server
+		-- Configuração alternativa do Emmet Language Server
 		lspconfig.emmet_language_server.setup({
 			capabilities = capabilities,
+			on_attach = on_attach,
 			filetypes = {
 				"css",
 				"eruby",
@@ -159,6 +287,7 @@ return {
 				"scss",
 				"pug",
 				"typescriptreact",
+				"vue",
 			},
 			init_options = {
 				includeLanguages = {},
@@ -173,115 +302,69 @@ return {
 			},
 		})
 
-		-- denols
-		lspconfig.denols.setup({
-			capabilities = capabilities,
-			root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc"),
-		})
+		-- Configurações adicionais para LSPs comuns (descomente conforme necessário)
 
-		-- ts_ls (replaces tsserver)
-		-- lspconfig.ts_ls.setup({
-		--     capabilities = capabilities,
-		--     root_dir = function(fname)
-		--         local util = lspconfig.util
-		--         return not util.root_pattern("deno.json", "deno.jsonc")(fname)
-		--             and util.root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git")(fname)
-		--     end,
-		--     single_file_support = false,
-		--     init_options = {
-		--         preferences = {
-		--             includeCompletionsWithSnippetText = true,
-		--             includeCompletionsForImportStatements = true,
-		--         },
-		--     },
-		-- })
-		lspconfig.ts_ls.setup({
-			capabilities = capabilities,
-			filetypes = {
-				"javascript",
-				"javascriptreact",
-				"typescript",
-				"typescriptreact",
-			},
-			root_dir = function(fname)
-				local util = lspconfig.util
-				return not util.root_pattern("deno.json", "deno.jsonc")(fname)
-					and util.root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git")(fname)
-			end,
-			single_file_support = false,
-			init_options = {
-				preferences = {
-					includeCompletionsForModuleExports = true,
-					includeCompletionsForImportStatements = true,
-				},
-			},
-		})
-
-		-- gopls
-		lspconfig.gopls.setup({
-			capabilities = capabilities,
-			settings = {
-				gopls = {
-					analyses = {
-						unusedparams = true,
-					},
-					staticcheck = true,
-					gofumpt = true,
-				},
-			},
-		})
-
-		-- HACK: If using Blink.cmp Configure all LSPs here
-
-		-- ( comment the ones in mason )
-		-- local lspconfig = require("lspconfig")
-		-- local capabilities = require("blink.cmp").get_lsp_capabilities() -- Import capabilities from blink.cmp
-
-		-- Configure lua_ls
-		-- lspconfig.lua_ls.setup({
-		--     capabilities = capabilities,
-		--     settings = {
-		--         Lua = {
-		--             diagnostics = {
-		--                 globals = { "vim" },
-		--             },
-		--             completion = {
-		--                 callSnippet = "Replace",
-		--             },
-		--             workspace = {
-		--                 library = {
-		--                     [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-		--                     [vim.fn.stdpath("config") .. "/lua"] = true,
-		--                 },
-		--             },
-		--         },
-		--     },
-		-- })
-		--
-		-- -- Configure tsserver (TypeScript and JavaScript)
-		-- lspconfig.ts_ls.setup({
-		--     capabilities = capabilities,
-		--     root_dir = function(fname)
-		--         local util = lspconfig.util
-		--         return not util.root_pattern('deno.json', 'deno.jsonc')(fname)
-		--             and util.root_pattern('tsconfig.json', 'package.json', 'jsconfig.json', '.git')(fname)
-		--     end,
-		--     single_file_support = false,
-		--     on_attach = function(client, bufnr)
-		--         -- Disable formatting if you're using a separate formatter like Prettier
-		--         client.server_capabilities.documentFormattingProvider = false
-		--     end,
-		--     init_options = {
-		--         preferences = {
-		--             includeCompletionsWithSnippetText = true,
-		--             includeCompletionsForImportStatements = true,
-		--         },
-		--     },
+		-- HTML LSP
+		-- lspconfig.html.setup({
+		-- 	capabilities = capabilities,
+		-- 	on_attach = on_attach,
 		-- })
 
-		-- Add other LSP servers as needed, e.g., gopls, eslint, html, etc.
-		-- lspconfig.gopls.setup({ capabilities = capabilities })
-		-- lspconfig.html.setup({ capabilities = capabilities })
-		-- lspconfig.cssls.setup({ capabilities = capabilities })
+		-- CSS LSP
+		-- lspconfig.cssls.setup({
+		-- 	capabilities = capabilities,
+		-- 	on_attach = on_attach,
+		-- })
+
+		-- JSON LSP
+		-- lspconfig.jsonls.setup({
+		-- 	capabilities = capabilities,
+		-- 	on_attach = on_attach,
+		-- 	settings = {
+		-- 		json = {
+		-- 			schemas = require('schemastore').json.schemas(),
+		-- 			validate = { enable = true },
+		-- 		},
+		-- 	},
+		-- })
+
+		-- Python LSP (Pyright)
+		-- lspconfig.pyright.setup({
+		-- 	capabilities = capabilities,
+		-- 	on_attach = on_attach,
+		-- 	settings = {
+		-- 		python = {
+		-- 			analysis = {
+		-- 				typeCheckingMode = "basic",
+		-- 				autoSearchPaths = true,
+		-- 				useLibraryCodeForTypes = true,
+		-- 			},
+		-- 		},
+		-- 	},
+		-- })
+
+		-- Rust LSP
+		-- lspconfig.rust_analyzer.setup({
+		-- 	capabilities = capabilities,
+		-- 	on_attach = on_attach,
+		-- 	settings = {
+		-- 		["rust-analyzer"] = {
+		-- 			imports = {
+		-- 				granularity = {
+		-- 					group = "module",
+		-- 				},
+		-- 				prefix = "self",
+		-- 			},
+		-- 			cargo = {
+		-- 				buildScripts = {
+		-- 					enable = true,
+		-- 				},
+		-- 			},
+		-- 			procMacro = {
+		-- 				enable = true,
+		-- 			},
+		-- 		},
+		-- 	},
+		-- })
 	end,
 }
