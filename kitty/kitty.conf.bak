@@ -74,15 +74,14 @@ initial_window_width  1024
 initial_window_height 768
 
 window_padding_width 3.0
-macos_titlebar_color #171928
-macos_show_window_title_in none
-macos_menubar_title_max_length 0
+# macos_titlebar_color background
+macos_show_window_title_in all
 macos_thicken_font 0.15
 draw_minimal_borders yes
-window_margin_width 10
+window_margin_width 0
 window_padding_width 5
 macos_show_window_title_in all
-# macos_titlebar_color background
+macos_titlebar_color background
 # set window opacity. Adjust this for readability, if needed.
 #background_opacity 0.90
 #hide_window_decorations yes
@@ -109,7 +108,7 @@ bell_on_tab                     no
 enable_audio_bell               no
 window_alert_on_bell            no
 visual_bell_duration            0.0
-# visual_bell_color               none
+visual_bell_color               none
 
 # Mouse
 copy_on_select yes
@@ -127,9 +126,3 @@ shell_integration no-cursor
 # have to worry about accidentally committing your overrides.
 include kitty-overrides.conf
 
-
-
-# BEGIN_KITTY_THEME
-# Eldritch dark
-include current-theme.conf
-# END_KITTY_THEME
