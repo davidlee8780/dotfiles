@@ -1,5 +1,6 @@
 -- Disable netrw banner
 vim.cmd("let g:netrw_banner = 0")
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 -- line numbers
 vim.opt.nu = true
