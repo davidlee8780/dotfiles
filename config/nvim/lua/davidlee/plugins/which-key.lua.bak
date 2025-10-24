@@ -1,0 +1,121 @@
+return {
+  "folke/which-key.nvim",
+  event = "VeryLazy",
+  init = function()
+    vim.o.timeout = true
+    vim.o.timeoutlen = 300
+  end,
+  config = function()
+    -- Função auxiliar para log
+    local function log(msg, level)
+      level = level or vim.log.levels.INFO
+      vim.notify(msg, level)
+      -- Também imprime no comando :messages
+      print(msg)
+    end
+    
+    -- Tenta carregar which-key
+    local ok, wk = pcall(require, "which-key")
+    if not ok then
+      log("❌ Which-key não pôde ser carregado", vim.log.levels.ERROR)
+      return
+    end
+    
+    log("✅ Which-key carregado com sucesso")
+    
+    -- Verifica a versão/estrutura do which-key
+    log("📦 Verificando estrutura do which-key...")
+    log("  - tem setup? " .. tostring(type(wk.setup) == "function"))
+    log("  - tem add? " .. tostring(type(wk.add) == "function"))
+    log("  - tem show? " .. tostring(type(wk.show) == "function"))
+    log("  - tem register? " .. tostring(type(wk.register) == "function"))
+    
+    -- Setup básico
+    local setup_config = {
+      win = {
+        border = "rounded",
+        position = "bottom",
+      },
+    }
+    
+    local setup_ok, setup_err = pcall(wk.setup, setup_config)
+    
+    if not setup_ok then
+      log("❌ Erro no setup: " .. tostring(setup_err), vim.log.levels.ERROR)
+      -- Tenta setup alternativo
+      log("🔄 Tentando configuração alternativa...")
+      local alt_ok = pcall(wk.setup, {})
+      if alt_ok then
+        log("✅ Setup alternativo funcionou")
+      end
+    else
+      log("✅ Setup concluído com sucesso")
+    end
+    
+    -- Tenta diferentes formas de adicionar o keymapping
+    log("🔑 Configurando keymappings...")
+    
+    -- Método 1: vim.keymap.set (mais confiável)
+    local keymap_ok = pcall(vim.keymap.set, "n", "<leader>?", function()
+      if wk.show then
+        wk.show({ global = false })
+      else
+        vim.cmd("WhichKey")
+      end
+    end, { desc = "Buffer Local Keymaps" })
+    
+    if keymap_ok then
+      log("✅ Keymapping configurado via vim.keymap.set")
+    else
+      log("❌ Falha ao configurar keymapping", vim.log.levels.ERROR)
+    end
+    
+    -- Método 2: wk.add (se disponível)
+    if wk.add then
+      log("🔄 Tentando wk.add...")
+      
+      -- Tenta diferentes estruturas
+      local structures = {
+        -- Estrutura 1
+        function()
+          return {
+            { "<leader>?", function() wk.show({ global = false }) end, desc = "Buffer Keymaps" },
+          }
+        end,
+        -- Estrutura 2
+        function()
+          return {
+            ["<leader>?"] = { function() wk.show({ global = false }) end, "Buffer Keymaps" },
+          }
+        end,
+        -- Estrutura 3
+        function()
+          return {
+            {
+              "<leader>?",
+              function() wk.show({ global = false }) end,
+              desc = "Buffer Keymaps",
+              mode = "n",
+            },
+          }
+        end,
+      }
+      
+      for i, get_struct in ipairs(structures) do
+        local struct_ok, struct = pcall(get_struct)
+        if struct_ok then
+          local add_ok, add_err = pcall(wk.add, struct)
+          if add_ok then
+            log("  ✅ Estrutura " .. i .. " funcionou!")
+            break
+          else
+            log("  ❌ Estrutura " .. i .. " falhou: " .. tostring(add_err))
+          end
+        end
+      end
+    end
+    
+    log("🎉 Configuração concluída!")
+    log("💡 Use :messages para ver todos os logs")
+  end,
+}

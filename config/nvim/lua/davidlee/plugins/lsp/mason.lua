@@ -6,21 +6,21 @@ return {
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
 		"hrsh7th/cmp-nvim-lsp",
 		"neovim/nvim-lspconfig",
-		-- "saghen/blink.cmp",
 	},
 	config = function()
-		-- import mason and mason_lspconfig
-		local mason = require("mason")
-		local mason_lspconfig = require("mason-lspconfig")
-		local mason_tool_installer = require("mason-tool-installer")
+		local ok_mason, mason = pcall(require, "mason")
+		if not ok_mason then
+			return
+		end
+		local ok_mlsp, mason_lspconfig = pcall(require, "mason-lspconfig")
+		if not ok_mlsp then
+			return
+		end
+		local ok_tools, mason_tool_installer = pcall(require, "mason-tool-installer")
+		if not ok_tools then
+			return
+		end
 
-		-- NOTE: Moved these local imports below back to lspconfig.lua due to mason depracated handlers
-
-		-- local lspconfig = require("lspconfig")
-		-- local cmp_nvim_lsp = require("cmp_nvim_lsp")             -- import cmp-nvim-lsp plugin
-		-- local capabilities = cmp_nvim_lsp.default_capabilities() -- used to enable autocompletion (assign to every lsp server config)
-
-		-- enable mason and configure icons
 		mason.setup({
 			ui = {
 				icons = {
@@ -31,37 +31,57 @@ return {
 			},
 		})
 
+		-- LSP servers (nomes seguem os servers do nvim-lspconfig)
 		mason_lspconfig.setup({
-			automatic_enable = false,
-			-- servers for mason to install
+			automatic_installation = false,
 			ensure_installed = {
+				-- Core que você usa no lspconfig.lua
 				"lua_ls",
-				-- "ts_ls", currently using a ts plugin
+				"ts_ls", -- você está usando ts_ls no lspconfig.lua
+				"denols", -- também está configurado no lspconfig.lua
+				"pyright",
+				"jsonls",
 				"html",
 				"cssls",
-				"tailwindcss",
 				"gopls",
-				"angularls",
+				"rust_analyzer",
 				"emmet_ls",
 				"emmet_language_server",
-				-- "eslint",
-				"marksman",
+
+				-- Opcionais / extras
+				"bashls", -- útil mesmo sem config manual, cobre .sh
+				"yamlls", -- idem p/ YAML
+				"marksman", -- LSP de Markdown (se quiser diagnósticos/outline)
+				-- "tailwindcss",
+				-- "angularls",
+				-- "clangd",             -- só se for usar C/C++
 			},
 		})
 
+		-- Ferramentas (formatters/linters/etc) para o Conform e afins
 		mason_tool_installer.setup({
 			ensure_installed = {
-				"prettier", -- prettier formatter
-				"stylua", -- lua formatter
-				"isort", -- python formatter
-				"pylint",
-				"clangd",
-				"denols",
-				-- { 'eslint_d', version = '13.1.2' },
-			},
+				-- Web
+				"prettier",
+				"biome", -- para o seu "biome-check" no Conform
 
-			-- NOTE: mason BREAKING Change! Removed setup_handlers
-			-- moved lsp configuration settings back into lspconfig.lua file
+				-- Lua
+				"stylua",
+
+				-- Python (pipeline: ruff_fix | isort | black)
+				"black",
+				"isort",
+				"ruff",
+				"pylint",
+
+				-- Shell
+				"shfmt",
+				"shellcheck",
+
+				-- Opcionais úteis
+				-- "jq",
+				-- "yamlfmt",
+			},
 		})
 	end,
 }

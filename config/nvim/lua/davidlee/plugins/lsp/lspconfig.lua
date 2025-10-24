@@ -6,21 +6,19 @@ return {
 		{ "antosha417/nvim-lsp-file-operations", config = true },
 	},
 	config = function()
-		-- Função on_attach definida para configurações específicas de LSP
+		-- on_attach
 		local on_attach = function(client, _)
-			-- Desabilitar formatação para alguns clientes se necessário
 			if client.name == "ts_ls" then
 				client.server_capabilities.documentFormattingProvider = false
 			end
 		end
 
-		-- Configuração de keybinds automáticos quando LSP é anexado
+		-- Keybinds quando LSP anexa
 		vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 			callback = function(ev)
 				local opts = { buffer = ev.buf, silent = true }
 
-				-- Keymaps para navegação e funcionalidades LSP
 				opts.desc = "Show LSP references"
 				vim.keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
 
@@ -50,7 +48,7 @@ return {
 				opts.desc = "Show line diagnostics"
 				vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
 
-				opts.desc = "Show documentation for what is under cursor"
+				opts.desc = "Show documentation (hover)"
 				vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
 
 				opts.desc = "Restart LSP"
@@ -61,59 +59,68 @@ return {
 					vim.lsp.buf.signature_help()
 				end, opts)
 
-				-- Navegação entre diagnósticos
-				opts.desc = "Go to next diagnostic"
+				opts.desc = "Next diagnostic"
 				vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
 
-				opts.desc = "Go to previous diagnostic"
+				opts.desc = "Prev diagnostic"
 				vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
 			end,
 		})
 
-		-- Configuração de ícones para diagnósticos
+		-- Ícones/estilo de diagnósticos
 		local signs = {
-			[vim.diagnostic.severity.ERROR] = " ",
-			[vim.diagnostic.severity.WARN] = " ",
+			[vim.diagnostic.severity.ERROR] = " ",
+			[vim.diagnostic.severity.WARN] = " ",
 			[vim.diagnostic.severity.HINT] = "󰠠 ",
-			[vim.diagnostic.severity.INFO] = " ",
+			[vim.diagnostic.severity.INFO] = " ",
 		}
 
-		-- Aplicar configuração de diagnósticos
+		for severity, icon in pairs(signs) do
+			local name = vim.diagnostic.severity[severity]:lower()
+			vim.fn.sign_define("DiagnosticSign" .. name, {
+				text = icon,
+				texthl = "DiagnosticSign" .. name,
+				numhl = "",
+			})
+		end
+
 		vim.diagnostic.config({
-			signs = {
-				text = signs, -- Enable signs in the gutter
-			},
-			virtual_text = true, -- Specify Enable virtual text for diagnostics
-			underline = true, -- Specify Underline diagnostics
-			update_in_insert = false, -- Keep diagnostics active in insert mode
+			signs = { text = signs },
+			virtual_text = true,
+			underline = true,
+			update_in_insert = false,
 		})
 
-		-- Configuração base para todos os LSPs
-		local lspconfig = require("lspconfig")
+		-- Capabilities (cmp)
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
 		local capabilities = cmp_nvim_lsp.default_capabilities()
-
-		-- Melhorar capabilities para snippets
 		capabilities.textDocument.completion.completionItem.snippetSupport = true
 		capabilities.textDocument.completion.completionItem.resolveSupport = {
 			properties = { "documentation", "detail", "additionalTextEdits" },
 		}
 
-		-- Configuração do Lua LSP
-		lspconfig.lua_ls.setup({
+		-- Utilidades de root_pattern
+		local util = require("lspconfig.util")
+
+		-- Helper para configurar + habilitar servidores na nova API
+		local function setup(server, opts)
+			vim.lsp.config(server, opts or {})
+			vim.lsp.enable(server)
+		end
+
+		---------------------------------------------------------------------------
+		-- Servidores
+		---------------------------------------------------------------------------
+
+		-- Lua
+		setup("lua_ls", {
 			capabilities = capabilities,
 			on_attach = on_attach,
 			settings = {
 				Lua = {
-					runtime = {
-						version = "LuaJIT",
-					},
-					diagnostics = {
-						globals = { "vim", "use" },
-					},
-					completion = {
-						callSnippet = "Replace",
-					},
+					runtime = { version = "LuaJIT" },
+					diagnostics = { globals = { "vim", "use" } },
+					completion = { callSnippet = "Replace" },
 					workspace = {
 						library = {
 							[vim.fn.expand("$VIMRUNTIME/lua")] = true,
@@ -121,28 +128,22 @@ return {
 						},
 						checkThirdParty = false,
 					},
-					telemetry = {
-						enable = false,
-					},
+					telemetry = { enable = false },
 				},
 			},
 		})
 
-		-- Configuração do TypeScript/JavaScript LSP
-		lspconfig.ts_ls.setup({
+		-- TypeScript / JavaScript (ts_ls)
+		setup("ts_ls", {
 			capabilities = capabilities,
 			on_attach = on_attach,
-			filetypes = {
-				"javascript",
-				"javascriptreact",
-				"typescript",
-				"typescriptreact",
-			},
+			filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
 			root_dir = function(fname)
-				local util = lspconfig.util
-				-- Não usar ts_ls se for um projeto Deno
-				return not util.root_pattern("deno.json", "deno.jsonc")(fname)
-					and util.root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git")(fname)
+				-- Se for projeto Deno, não usar ts_ls
+				if util.root_pattern("deno.json", "deno.jsonc")(fname) then
+					return nil
+				end
+				return util.root_pattern("tsconfig.json", "package.json", "jsconfig.json", ".git")(fname)
 			end,
 			single_file_support = false,
 			init_options = {
@@ -178,11 +179,11 @@ return {
 			},
 		})
 
-		-- Configuração do Deno LSP
-		lspconfig.denols.setup({
+		-- Deno
+		setup("denols", {
 			capabilities = capabilities,
 			on_attach = on_attach,
-			root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc"),
+			root_dir = util.root_pattern("deno.json", "deno.jsonc"),
 			init_options = {
 				lint = true,
 				unstable = true,
@@ -198,38 +199,34 @@ return {
 			},
 		})
 
-		-- Configuração do Swift LSP (SourceKit)
-		local sourcekit_cmd = function()
+		-- Swift (SourceKit)
+		local function sourcekit_cmd()
 			local xcode_path =
 				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp"
 			local xcrun_result = vim.fn.system("xcrun --find sourcekit-lsp 2>/dev/null")
-
 			if vim.v.shell_error == 0 then
 				return { vim.trim(xcrun_result) }
 			elseif vim.fn.executable(xcode_path) == 1 then
 				return { xcode_path }
 			else
-				return { "sourcekit-lsp" } -- Fallback para PATH
+				return { "sourcekit-lsp" }
 			end
 		end
 
-		lspconfig.sourcekit.setup({
+		setup("sourcekit", {
 			capabilities = capabilities,
 			on_attach = on_attach,
 			cmd = sourcekit_cmd(),
 			filetypes = { "swift", "objective-c", "objective-cpp" },
 		})
 
-		-- Configuração do Go LSP
-		lspconfig.gopls.setup({
+		-- Go
+		setup("gopls", {
 			capabilities = capabilities,
 			on_attach = on_attach,
 			settings = {
 				gopls = {
-					analyses = {
-						unusedparams = true,
-						shadow = true,
-					},
+					analyses = { unusedparams = true, shadow = true },
 					staticcheck = true,
 					gofumpt = true,
 					codelenses = {
@@ -255,8 +252,8 @@ return {
 			},
 		})
 
-		-- Configuração do Emmet LSP
-		lspconfig.emmet_ls.setup({
+		-- Emmet (node)
+		setup("emmet_ls", {
 			capabilities = capabilities,
 			on_attach = on_attach,
 			filetypes = {
@@ -272,8 +269,8 @@ return {
 			},
 		})
 
-		-- Configuração alternativa do Emmet Language Server
-		lspconfig.emmet_language_server.setup({
+		-- Emmet (alternativo)
+		setup("emmet_language_server", {
 			capabilities = capabilities,
 			on_attach = on_attach,
 			filetypes = {
@@ -302,69 +299,63 @@ return {
 			},
 		})
 
-		-- Configurações adicionais para LSPs comuns (descomente conforme necessário)
+		-- HTML
+		setup("html", {
+			capabilities = capabilities,
+			on_attach = on_attach,
+		})
 
-		-- HTML LSP
-		-- lspconfig.html.setup({
-		-- 	capabilities = capabilities,
-		-- 	on_attach = on_attach,
-		-- })
+		-- CSS
+		setup("cssls", {
+			capabilities = capabilities,
+			on_attach = on_attach,
+		})
 
-		-- CSS LSP
-		-- lspconfig.cssls.setup({
-		-- 	capabilities = capabilities,
-		-- 	on_attach = on_attach,
-		-- })
+		-- JSON (com schemastore se disponível)
+		local has_schemastore, schemastore = pcall(require, "schemastore")
+		setup("jsonls", {
+			capabilities = capabilities,
+			on_attach = on_attach,
+			settings = {
+				json = {
+					schemas = has_schemastore and schemastore.json.schemas() or nil,
+					validate = { enable = true },
+				},
+			},
+		})
 
-		-- JSON LSP
-		-- lspconfig.jsonls.setup({
-		-- 	capabilities = capabilities,
-		-- 	on_attach = on_attach,
-		-- 	settings = {
-		-- 		json = {
-		-- 			schemas = require('schemastore').json.schemas(),
-		-- 			validate = { enable = true },
-		-- 		},
-		-- 	},
-		-- })
+		-- Python (Pyright)
+		setup("pyright", {
+			capabilities = capabilities,
+			on_attach = on_attach,
+			settings = {
+				python = {
+					analysis = {
+						typeCheckingMode = "basic", -- "off" | "basic" | "strict"
+						autoSearchPaths = true,
+						useLibraryCodeForTypes = true,
+					},
+				},
+			},
+		})
 
-		-- Python LSP (Pyright)
-		-- lspconfig.pyright.setup({
-		-- 	capabilities = capabilities,
-		-- 	on_attach = on_attach,
-		-- 	settings = {
-		-- 		python = {
-		-- 			analysis = {
-		-- 				typeCheckingMode = "basic",
-		-- 				autoSearchPaths = true,
-		-- 				useLibraryCodeForTypes = true,
-		-- 			},
-		-- 		},
-		-- 	},
-		-- })
+		-- Rust
+		setup("rust_analyzer", {
+			capabilities = capabilities,
+			on_attach = on_attach,
+			settings = {
+				["rust-analyzer"] = {
+					imports = {
+						granularity = { group = "module" },
+						prefix = "self",
+					},
+					cargo = { buildScripts = { enable = true } },
+					procMacro = { enable = true },
+				},
+			},
+		})
 
-		-- Rust LSP
-		-- lspconfig.rust_analyzer.setup({
-		-- 	capabilities = capabilities,
-		-- 	on_attach = on_attach,
-		-- 	settings = {
-		-- 		["rust-analyzer"] = {
-		-- 			imports = {
-		-- 				granularity = {
-		-- 					group = "module",
-		-- 				},
-		-- 				prefix = "self",
-		-- 			},
-		-- 			cargo = {
-		-- 				buildScripts = {
-		-- 					enable = true,
-		-- 				},
-		-- 			},
-		-- 			procMacro = {
-		-- 				enable = true,
-		-- 			},
-		-- 		},
-		-- 	},
-		-- })
+		-- (Opcional) Você poderia habilitar vários de uma vez:
+		-- vim.lsp.enable({ "lua_ls","ts_ls","denols","sourcekit","gopls","emmet_ls","emmet_language_server","html","cssls","jsonls","pyright","rust_analyzer" })
 	end,
 }

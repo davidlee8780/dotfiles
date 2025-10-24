@@ -1,3 +1,4 @@
+
 return {
 	-- HACK: docs @ https://github.com/folke/snacks.nvim/blob/main/docs
 	{
@@ -15,9 +16,7 @@ return {
 				},
 			},
 			-- Snacks Modules
-			input = {
-				enabled = true,
-			},
+			input = { enabled = true },
 			quickfile = {
 				enabled = true,
 				exclude = { "latex" },
@@ -37,9 +36,7 @@ return {
 					},
 				},
 				layout = {
-					-- presets options : "default" , "ivy" , "ivy-split" , "telescope" , "vscode", "select" , "sidebar"
-					-- override picker layout in keymaps function as a param below
-					preset = "telescope", -- defaults to this layout unless overidden
+					preset = "telescope",
 					cycle = false,
 				},
 				layouts = {
@@ -61,7 +58,7 @@ return {
 						},
 					},
 					telescope = {
-						reverse = true, -- set to false for search bar to be on top
+						reverse = true,
 						layout = {
 							box = "horizontal",
 							backdrop = false,
@@ -108,34 +105,46 @@ return {
 					},
 				},
 			},
-			image = {
-				enabled = true,
-				doc = {
-					float = true, -- show image on cursor hover
-					inline = false, -- show image inline
-					max_width = 50,
-					max_height = 30,
-					wo = {
-						wrap = false,
+
+			-- IMAGE PATCH: só ativa se terminal suportar kitty/wezterm/ghostty
+			image = (function()
+				local enabled = (vim.env.KITTY_LISTEN_ON and #vim.env.KITTY_LISTEN_ON > 0)
+					or (vim.env.TERM_PROGRAM == "WezTerm")
+					or (vim.env.TERM and vim.env.TERM:lower():match("ghostty"))
+				return {
+					enabled = enabled,
+					doc = {
+						float = true,
+						inline = false, -- inline é mais pesado
+						max_width = 50,
+						max_height = 30,
+						wo = { wrap = false },
 					},
-				},
-				convert = {
-					notify = true,
-					command = "magick",
-				},
-				img_dirs = {
-					"img",
-					"images",
-					"assets",
-					"static",
-					"public",
-					"media",
-					"attachments",
-					"Archives/All-Vault-Images/",
-					"~/Library",
-					"~/Downloads",
-				},
-			},
+					convert = {
+						notify = true,
+						command = "magick", -- ImageMagick
+					},
+					mermaid = {
+						cmd = "mmdc", -- @mermaid-js/mermaid-cli
+					},
+					pdf = {
+						gs = "gs", -- Ghostscript
+					},
+					img_dirs = {
+						"img",
+						"images",
+						"assets",
+						"static",
+						"public",
+						"media",
+						"attachments",
+						"Archives/All-Vault-Images/",
+						"~/Library",
+						"~/Downloads",
+					},
+				}
+			end)(),
+
 			dashboard = {
 				enabled = true,
 				sections = {
@@ -155,97 +164,24 @@ return {
 		},
 		-- NOTE: Keymaps
 		keys = {
-			{
-				"<leader>lg",
-				function()
-					require("snacks").lazygit()
-				end,
-				desc = "Lazygit",
-			},
-			{
-				"<leader>gl",
-				function()
-					require("snacks").lazygit.log()
-				end,
-				desc = "Lazygit Logs",
-			},
-			{
-				"<leader>rN",
-				function()
-					require("snacks").rename.rename_file()
-				end,
-				desc = "Fast Rename Current File",
-			},
-			{
-				"<leader>dB",
-				function()
-					require("snacks").bufdelete()
-				end,
-				desc = "Delete or Close Buffer  (Confirm)",
-			},
+			{ "<leader>lg", function() require("snacks").lazygit() end, desc = "Lazygit" },
+			{ "<leader>gl", function() require("snacks").lazygit.log() end, desc = "Lazygit Logs" },
+			{ "<leader>rN", function() require("snacks").rename.rename_file() end, desc = "Fast Rename Current File" },
+			{ "<leader>dB", function() require("snacks").bufdelete() end, desc = "Delete or Close Buffer  (Confirm)" },
 
 			-- Snacks Picker
-			{
-				"<leader>pf",
-				function()
-					require("snacks").picker.files()
-				end,
-				desc = "Find Files (Snacks Picker)",
-			},
-			{
-				"<leader>pc",
-				function()
-					require("snacks").picker.files({ cwd = "~/dotfiles/nvim/.config/nvim/lua" })
-				end,
-				desc = "Find Config File",
-			},
-			{
-				"<leader>ps",
-				function()
-					require("snacks").picker.grep()
-				end,
-				desc = "Grep word",
-			},
-			{
-				"<leader>pws",
-				function()
-					require("snacks").picker.grep_word()
-				end,
-				desc = "Search Visual selection or Word",
-				mode = { "n", "x" },
-			},
-			{
-				"<leader>pk",
-				function()
-					require("snacks").picker.keymaps({ layout = "ivy" })
-				end,
-				desc = "Search Keymaps (Snacks Picker)",
-			},
+			{ "<leader>pf", function() require("snacks").picker.files() end, desc = "Find Files (Snacks Picker)" },
+			{ "<leader>pc", function() require("snacks").picker.files({ cwd = "~/dotfiles/nvim/.config/nvim/lua" }) end, desc = "Find Config File" },
+			{ "<leader>ps", function() require("snacks").picker.grep() end, desc = "Grep word" },
+			{ "<leader>pws", function() require("snacks").picker.grep_word() end, desc = "Search Visual selection or Word", mode = { "n", "x" } },
+			{ "<leader>pk", function() require("snacks").picker.keymaps({ layout = "ivy" }) end, desc = "Search Keymaps (Snacks Picker)" },
 
 			-- Git Stuff
-			{
-				"<leader>gbr",
-				function()
-					require("snacks").picker.git_branches({ layout = "select" })
-				end,
-				desc = "Pick and Switch Git Branches",
-			},
+			{ "<leader>gbr", function() require("snacks").picker.git_branches({ layout = "select" }) end, desc = "Pick and Switch Git Branches" },
 
 			-- Other Utils
-			{
-				"<leader>th",
-				function()
-					require("snacks").picker.colorschemes({ layout = "ivy" })
-				end,
-				desc = "Pick Color Schemes",
-			},
-			{
-				"<leader>vh",
-				function()
-					require("snacks").picker.help()
-				end,
-				desc = "Help Pages",
-			},
+			{ "<leader>th", function() require("snacks").picker.colorschemes({ layout = "ivy" }) end, desc = "Pick Color Schemes" },
+			{ "<leader>vh", function() require("snacks").picker.help() end, desc = "Help Pages" },
 		},
 	},
 	-- NOTE: todo comments w/ snacks
@@ -254,20 +190,8 @@ return {
 		event = { "BufReadPre", "BufNewFile" },
 		optional = true,
 		keys = {
-			{
-				"<leader>pt",
-				function()
-					require("snacks").picker.todo_comments()
-				end,
-				desc = "Todo",
-			},
-			{
-				"<leader>pT",
-				function()
-					require("snacks").picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } })
-				end,
-				desc = "Todo/Fix/Fixme",
-			},
+			{ "<leader>pt", function() require("snacks").picker.todo_comments() end, desc = "Todo" },
+			{ "<leader>pT", function() require("snacks").picker.todo_comments({ keywords = { "TODO", "FIX", "FIXME" } }) end, desc = "Todo/Fix/Fixme" },
 		},
 	},
 }
