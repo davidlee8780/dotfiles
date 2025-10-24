@@ -59,11 +59,15 @@ return {
 					vim.lsp.buf.signature_help()
 				end, opts)
 
-				opts.desc = "Next diagnostic"
-				vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-
-				opts.desc = "Prev diagnostic"
-				vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+				opts.desc = "Go to previous diagnostic"
+				vim.keymap.set("n", "[d", function()
+					vim.diagnostic.jump({ count = -1, float = true })
+				end, opts) -- jump to previous diagnostic in buffer
+				--
+				opts.desc = "Go to next diagnostic"
+				vim.keymap.set("n", "]d", function()
+					vim.diagnostic.jump({ count = 1, float = true })
+				end, opts) -- jump to next diagnostic in buffer
 			end,
 		})
 
